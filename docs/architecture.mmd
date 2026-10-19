@@ -1,0 +1,63 @@
+flowchart TB
+    subgraph sources["SOURCES — the signals nobody joins"]
+        direction LR
+        WB["World Bank<br/>logistics index, GDP"]
+        FX["ECB via Frankfurter<br/>daily FX"]
+        WX["Open-Meteo<br/>daily port weather"]
+        PO["Order book<br/>suppliers · SKUs · POs"]
+    end
+
+    subgraph staging["STAGING — typed, cleaned, one grain per model"]
+        STG["stg_* views<br/>pivot indicators · cast dates · handle nulls"]
+    end
+
+    subgraph intermediate["INTERMEDIATE — where the signals become evidence"]
+        ANOM["int_port_weather_anomaly<br/>severity vs each port's own<br/>distribution, not a fixed mm"]
+        VOL["int_fx_volatility<br/>moves z-scored against each<br/>currency's own 60-day window"]
+        EXP["int_po_exposure<br/>joins every order back to the<br/>weather it met in transit"]
+        LT["int_sku_lead_time<br/>mean and spread per SKU"]
+    end
+
+    subgraph marts["MARTS — one per decision"]
+        DRV["mart_lead_time_drivers<br/>fits days lost per storm day"]
+        RISK["mart_spend_at_risk<br/>late AND caused, not merely exposed"]
+        SUP["mart_supplier_scorecard<br/>OTIF · p95 · drift"]
+        SS["mart_safety_stock<br/>buffer split by what drives it"]
+        SSR["mart_single_source_risk<br/>concentration × criticality × port"]
+        COST["mart_disruption_cost<br/>disruption priced in money"]
+        ALT["mart_sourcing_alternatives<br/>every switch, costed"]
+    end
+
+    subgraph out["DECISIONS — what someone does on Monday"]
+        D1["Where money is at risk"]
+        D2["What a lane's delay costs"]
+        D3["Which SKUs to dual-source"]
+        D4["Which suppliers to move"]
+    end
+
+    WB --> STG
+    FX --> STG
+    WX --> STG
+    PO --> STG
+
+    STG --> ANOM
+    STG --> VOL
+    STG --> EXP
+    STG --> LT
+
+    ANOM --> EXP
+    EXP --> DRV
+    EXP --> RISK
+    EXP --> SUP
+    LT --> SS
+    VOL --> RISK
+    SS --> SSR
+    SS --> COST
+    DRV --> RISK
+    SUP --> ALT
+    ANOM --> SSR
+
+    RISK --> D1
+    COST --> D2
+    SSR --> D3
+    ALT --> D4
