@@ -1,0 +1,10 @@
+data/warehouse.duckdb
+data/raw/*.csv
+target/
+dbt_packages/
+logs/
+__pycache__/
+.venv/
+.user.yml
+.ruff_cache/
+.pytest_cache/

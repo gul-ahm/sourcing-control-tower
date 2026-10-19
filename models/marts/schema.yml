@@ -1,0 +1,169 @@
+version: 2
+
+models:
+  - name: dim_country
+    columns:
+      - name: country_iso3
+        tests: [unique, not_null]
+      - name: currency
+        tests: [not_null]
+
+  - name: fct_fx_daily
+    columns:
+      - name: units_per_usd
+        tests: [not_null]
+
+  - name: fct_port_weather
+    columns:
+      - name: is_disrupted
+        tests: [not_null]
+
+  - name: fct_purchase_orders
+    description: >
+      One row per purchase order line, enriched with the port weather it met in
+      transit. Under contract: the dashboard and every downstream mart read this
+      table, so a column that changes type or disappears should fail the build
+      here rather than surface as a broken chart.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: po_id
+        data_type: varchar
+        tests: [unique, not_null]
+      - name: supplier_id
+        data_type: varchar
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_suppliers')
+              field: supplier_id
+      - name: supplier_name
+        data_type: varchar
+      - name: country_iso3
+        data_type: varchar
+      - name: tier
+        data_type: bigint
+      - name: sku_id
+        data_type: varchar
+        tests:
+          - relationships:
+              to: ref('stg_skus')
+              field: sku_id
+      - name: category
+        data_type: varchar
+      - name: criticality
+        data_type: varchar
+        tests:
+          - accepted_values:
+              values: ['A', 'B', 'C']
+      - name: order_date
+        data_type: date
+      - name: promised_date
+        data_type: date
+      - name: received_date
+        data_type: date
+      - name: qty_units
+        data_type: bigint
+      - name: unit_price_usd
+        data_type: double
+      - name: line_value_usd
+        data_type: double
+        tests: [not_null]
+      - name: shipped_mode
+        data_type: varchar
+        description: Ocean by default; Air when a critical line was expedited.
+        tests:
+          - accepted_values:
+              values: ['Ocean', 'Air']
+      - name: expedite_cost_usd
+        data_type: double
+      - name: promised_lead_days
+        data_type: bigint
+      - name: actual_lead_days
+        data_type: bigint
+      - name: delay_days
+        data_type: bigint
+      - name: delay_bucket
+        data_type: varchar
+      - name: is_late
+        data_type: boolean
+      - name: storm_days
+        data_type: bigint
+        description: >
+          Anomalous days at the origin port while the order was in transit.
+          Derived by joining back to weather, never supplied by the source.
+      - name: worst_severity
+        data_type: double
+
+  - name: mart_supplier_scorecard
+    columns:
+      - name: supplier_id
+        tests: [unique, not_null]
+      - name: otif_pct
+        tests: [not_null]
+
+  - name: mart_lead_time_drivers
+    columns:
+      - name: storm_days
+        tests: [unique, not_null]
+
+  - name: mart_spend_at_risk
+    columns:
+      - name: exposed_spend_usd
+        tests: [not_null]
+
+  - name: mart_sourcing_scorecard
+    columns:
+      - name: country_iso3
+        tests: [unique, not_null]
+      - name: sourcing_score
+        tests: [not_null]
+
+  - name: mart_safety_stock
+    description: >
+      Safety stock per SKU sized against demand and lead-time variability
+      together. Service level comes from ABC criticality, so an A item is held
+      to 99% and a C item to 90%.
+    columns:
+      - name: sku_id
+        description: Grain of this model.
+        tests: [unique, not_null]
+      - name: service_level
+        tests:
+          - accepted_values:
+              values: [0.90, 0.95, 0.99]
+      - name: safety_stock_units
+        tests: [not_null]
+      - name: pct_buffer_from_lead_time
+        description: >
+          Share of the buffer attributable to lead-time variability rather than
+          demand variability. High values mean the fix is supplier reliability,
+          not more stock.
+        tests:
+          - not_null
+
+  - name: mart_single_source_risk
+    description: >
+      Critical SKUs concentrated on one supplier behind a disrupted port.
+      Ranked by a severity score rather than flagged, so the list can be worked
+      top down.
+    columns:
+      - name: sku_id
+        tests: [unique, not_null]
+      - name: concentration_risk_score
+        tests: [not_null]
+      - name: criticality
+        tests:
+          - accepted_values:
+              values: ['A', 'B', 'C']
+
+  - name: mart_disruption_cost
+    description: >
+      Port disruption priced in money: air freight actually paid plus the
+      annual carrying cost of the buffer held only because lead times move.
+    columns:
+      - name: country_iso3
+        tests: [unique, not_null]
+      - name: total_disruption_cost_usd
+        tests: [not_null]

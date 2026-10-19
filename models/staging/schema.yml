@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: stg_country_metrics
+    columns:
+      - name: country_iso3
+        tests: [not_null]
+      - name: year
+        tests: [not_null]
+
+  - name: stg_fx
+    columns:
+      - name: rate_date
+        tests: [not_null]
+      - name: currency
+        tests: [not_null]
+      - name: units_per_usd
+        tests: [not_null]
+
+  - name: stg_port_weather
+    columns:
+      - name: country_iso3
+        tests: [not_null]
+      - name: obs_date
+        tests: [not_null]
+
+  - name: stg_suppliers
+    columns:
+      - name: supplier_id
+        tests: [unique, not_null]
+
+  - name: stg_skus
+    columns:
+      - name: sku_id
+        tests: [unique, not_null]
+
+  - name: stg_purchase_orders
+    columns:
+      - name: po_id
+        tests: [unique, not_null]
+      - name: line_value_usd
+        tests: [not_null]

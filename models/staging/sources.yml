@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: worldbank
+      - name: fx
+      - name: weather
+      - name: countries
+      - name: suppliers
+      - name: skus
+      - name: supplier_catalogue
+      - name: purchase_orders
+      - name: demand

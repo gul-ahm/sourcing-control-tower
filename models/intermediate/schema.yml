@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: int_port_weather_anomaly
+    columns:
+      - name: severity_pctile
+        tests: [not_null]
+      - name: is_anomalous
+        tests: [not_null]
+
+  - name: int_fx_volatility
+    columns:
+      - name: currency
+        tests: [not_null]
+
+  - name: int_po_exposure
+    columns:
+      - name: po_id
+        tests: [unique, not_null]
+      - name: storm_days
+        tests: [not_null]

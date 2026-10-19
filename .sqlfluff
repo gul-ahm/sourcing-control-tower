@@ -1,0 +1,37 @@
+[sqlfluff]
+dialect = duckdb
+templater = jinja
+max_line_length = 100
+# RF01 cannot resolve refs through the jinja stub and AM04 trips on select * in
+# CTEs. AL03 misreads the value rows of a union, which take their names from the
+# first branch. AM06 objects to `group by 1`, which is the house style here.
+exclude_rules = RF01, AM04, ST06, LT09, AL03, AM06
+# The jinja templater cannot parse dbt's snapshot block.
+exclude_path = snapshots
+
+[sqlfluff:templater:jinja:context]
+anomaly_pctile = 0.97
+risk_window_days = 90
+late_tolerance_days = 7
+min_receipts_for_stats = 8
+inventory_carrying_rate = 0.22
+
+[sqlfluff:rules:capitalisation.keywords]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.functions]
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.identifiers]
+extended_capitalisation_policy = lower
+
+[sqlfluff:indentation]
+indented_joins = false
+indented_ctes = false
+
+# Keep aliases column-aligned rather than collapsed to a single space - the
+# marts are read far more often than they are written.
+[sqlfluff:layout:type:alias_expression]
+spacing_before = align
+align_within = select_clause
+align_scope = bracketed

@@ -1,0 +1,9 @@
+.git
+.github
+target
+logs
+data
+__pycache__
+.pytest_cache
+.ruff_cache
+*.duckdb

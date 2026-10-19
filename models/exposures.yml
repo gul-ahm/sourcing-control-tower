@@ -1,0 +1,25 @@
+version: 2
+
+exposures:
+  - name: sourcing_control_tower
+    type: dashboard
+    maturity: high
+    url: http://localhost:8501
+    description: >
+      The Streamlit app. Declared so the lineage graph shows which marts a
+      change actually breaks — `dbt ls --select +exposure:sourcing_control_tower`
+      lists everything it depends on.
+    owner:
+      name: Gulzar Ahmed
+      email: eng.ahmed.hzb@gmail.com
+    depends_on:
+      - ref('fct_purchase_orders')
+      - ref('fct_port_weather')
+      - ref('mart_sourcing_scorecard')
+      - ref('mart_supplier_scorecard')
+      - ref('mart_spend_at_risk')
+      - ref('mart_lead_time_drivers')
+      - ref('mart_sourcing_alternatives')
+      - ref('mart_safety_stock')
+      - ref('mart_single_source_risk')
+      - ref('mart_disruption_cost')
